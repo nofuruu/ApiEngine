@@ -2,23 +2,21 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\Product;
+use App\Models\deliveries;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
-use Tymon\JWTAuth\Exceptions\TokenExpiredException;
-use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 
-
-class ProdukController extends BaseApiController
+class DeliveryController extends BaseApiController
 {
+
     protected $user;
     protected $model;
     public function __construct()
     {
         $this->middleware('auth:api');
-        $this->model = new Product();
+        $this->model = new Deliveries();
     }
 
     protected function validateToken(Request $request)
@@ -50,7 +48,6 @@ class ProdukController extends BaseApiController
         ], $code);
     }
 
-
     protected function errorResponse($message, $code)
     {
         return response()->json([
@@ -65,10 +62,10 @@ class ProdukController extends BaseApiController
         if ($tokenValidation !== true) return $tokenValidation;
 
         try {
-            $products = $this->model->orderBy('id', 'asc')->get();
-            return $this->successResponse($products);
+            $deliveriess = $this->model->orderBy('id', 'asc')->get();
+            return $this->successResponse($deliveriess);
         } catch (\Exception $e) {
-            return $this->errorResponse('Error fetching products', 500);
+            return $this->errorResponse('Error fetching deliveriess', 500);
         }
     }
 
@@ -76,29 +73,32 @@ class ProdukController extends BaseApiController
     {
         $tokenValidation = $this->validateToken($request);
         if ($tokenValidation !== true) return $tokenValidation;
-
+    
         try {
-            $request->merge([
-                'harga' => str_replace(',', '', $request->harga)
-            ]);
-
             $validator = Validator::make($request->all(), [
-                'nama' => 'required|string|max:255',
-                'deskripsi' => 'required|string',
-                'harga' => 'required|numeric|max:9999999',
+                'sender_name' => 'required|string|max:255',
+                'sender_address' => 'required|string|max:255',
+                'recipient_address' => 'required|string|max:255',
+                'recipient_name' => 'required|string|max:255',
+                'sender_phone' => 'required|digits_between:10,15',
+                'recipient_phone' => 'required|digits_between:10,15'
             ]);
-
+    
             if ($validator->fails()) {
                 return $this->errorResponse($validator->errors(), 422);
             }
-
-            $product = $this->model->create($validator->validated());
-            return $this->successResponse($product, 'Product created successfully', 201);
+    
+            $data = $validator->validated();
+            $data['status'] = 'pending';
+            
+            $deliveries = $this->model->create($data);
+    
+            return $this->successResponse($deliveries, 'Deliveries Request Created', 201);
         } catch (\Exception $e) {
-            return $this->errorResponse('Error creating product', 500);
+            return $this->errorResponse('Error creating deliveries', 500);
         }
     }
-
+    
 
     public function show(Request $request, string $id)
     {
@@ -106,10 +106,10 @@ class ProdukController extends BaseApiController
         if ($tokenValidation !== true) return $tokenValidation;
 
         try {
-            $product = $this->model->findOrFail($id);
-            return $this->successResponse($product);
+            $deliveries = $this->model->findOrFail($id);
+            return $this->successResponse($deliveries);
         } catch (\Exception $e) {
-            return $this->errorResponse('Product not found', 404);
+            return $this->errorResponse('deliveries not found', 404);
         }
     }
 
@@ -119,28 +119,34 @@ class ProdukController extends BaseApiController
         if ($tokenValidation !== true) return $tokenValidation;
 
         try {
-            $product = $this->model->findOrFail($id);
+            $deliveries = $this->model->findOrFail($id);
 
             $data = [
-                'nama' => $request->input('nama'),
-                'deskripsi' => $request->input('deskripsi'),
-                'harga' => str_replace(',', '', $request->input('harga')),
+                'sender_name' => $request->input('sender_name'),
+                'sender_address' => $request->input('sender_address'),
+                'rercipient_address' => $request->input('recipient_address'),
+                'recipient_name' => $request->input('recipient_name'),
+                'recipient_phone' => $request->input('recipient_phone'),
+                'sender_phone' => $request->input('sender_phone'),
             ];
 
             $validator = Validator::make($data, [
-                'nama' => 'required|string|max:255',
-                'deskripsi' => 'required|string',
-                'harga' => 'required|numeric|max:9999999',
+                'sender_name' => 'required|string|max:255',
+                'sender_address' => 'required|string|max:255',
+                'recipient_address' => 'required|string|max:255',
+                'recipient_name' => 'required|string|max:255',
+                'sender_phone' => 'required|string|max:255',
+                'recipient_phone' => 'required|string|max:255'
             ]);
 
             if ($validator->fails()) {
                 return $this->errorResponse($validator->errors(), 422);
             }
 
-            $product->update($validator->validated());
-            return $this->successResponse($product, 'Product updated successfully');
+            $deliveries->update($validator->validated());
+            return $this->successResponse($deliveries, 'deliveries updated successfully');
         } catch (\Exception $e) {
-            return $this->errorResponse('Error updating product', 500);
+            return $this->errorResponse('Error updating deliveries', 500);
         }
     }
 
@@ -151,29 +157,11 @@ class ProdukController extends BaseApiController
         if ($tokenValidation !== true) return $tokenValidation;
 
         try {
-            $product = $this->model->findOrFail($id);
-            $product->delete();
-            return $this->successResponse(null, 'Product deleted successfully', 204);
+            $deliveries = $this->model->findOrFail($id);
+            $deliveries->delete();
+            return $this->successResponse(null, 'deliveries deleted successfully', 204);
         } catch (\Exception $e) {
-            return $this->errorResponse('Error deleting product', 500);
-        }
-    }
-
-    public function search(Request $request)
-    {
-        $tokenValidation = $this->validateToken($request);
-        if ($tokenValidation !== true) return $tokenValidation;
-
-        try {
-            $query = $request->input('q');
-            $products = $this->model->where('nama', 'ilike', "%{$query}%")
-                ->orWhere('deskripsi', 'ilike', "%{$query}%")
-                ->orderBy('id', 'asc')
-                ->get();
-
-            return $this->successResponse($products);
-        } catch (\Exception $e) {
-            return $this->errorResponse('Error searching products', 500);
+            return $this->errorResponse('Error deleting deliveries', 500);
         }
     }
 }
