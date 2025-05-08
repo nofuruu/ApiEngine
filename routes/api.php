@@ -18,9 +18,12 @@ use App\Http\Controllers\Api\DeliveryController;
 */
 
 Route::post('/login', [AuthController::class, 'login'])->name('login');
+Route::post('/verifyOtp', [AuthController::class, 'verifyOtp'])->name('verifyOtp');
 Route::post('/register', [AuthController::class, 'register'])->name('register');
 
 Route::middleware(['jwt.auth'])->group(function () {
+    Route::get('/users', [AuthController::class, 'userCount']);
+
     //Routes Produk
     Route::get('/produk', [ProdukController::class, 'datatable']);
     Route::post('/produk', [ProdukController::class, 'store']);
