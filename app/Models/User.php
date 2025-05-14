@@ -10,6 +10,17 @@ class User extends Authenticatable implements JWTSubject
 {
     use Notifiable;
 
+    protected $fillable = [
+        'name',
+        'firstname',
+        'lastname',
+        'departement',
+        'email',
+        'phone',
+        'password',
+        'otp'
+    ];
+
     //User Model
     /**
      * Get the identifier that will be stored in the subject claim of the JWT.

@@ -143,41 +143,41 @@
                 <div class="form-row">
                     <div class="form-group">
                         <span class="icon"><i class="fa fa-user"></i></span>
-                        <input type="text" name="firstname" placeholder="First Name" required>
+                        <input type="text" name="firstname" id="firstname" placeholder="First Name" required>
                     </div>
                     <div class="form-group">
                         <span class="icon"><i class="fa fa-user"></i></span>
-                        <input type="text" name="lastname" placeholder="Last Name" required>
+                        <input type="text" name="lastname" id="lastname" placeholder="Last Name" required>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <span class="icon"><i class="fa fa-building"></i></span>
-                        <input type="text" name="departement" placeholder="Departement/Office" required>
+                        <input type="text" name="departement" id="departement" placeholder="Departement/Office" required>
                     </div>
                     <div class="form-group">
                         <span class="icon"><i class="fas fa-user"></i></span>
-                        <input type="text" name="username" placeholder="Username" required>
+                        <input type="text" name="username" id="username" placeholder="Username" required>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <span class="icon"><i class="fas fa-envelope"></i></span>
-                        <input type="email" name="email" placeholder="Email" required>
+                        <input type="email" name="email" id="email" placeholder="Email" required>
                     </div>
                     <div class="form-group">
                         <span class="icon"><i class="fas fa-phone"></i></span>
-                        <input type="text" name="phone" placeholder="Phone Number" required>
+                        <input type="text" name="phone" id="phone" placeholder="Phone Number" required>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <span class="icon"><i class="fas fa-lock"></i></span>
-                        <input type="password" name="password" placeholder="Password" required>
+                        <input type="password" name="password" id="password" placeholder="Password" required>
                     </div>
                     <div class="form-group">
                         <span class="icon"><i class="fas fa-check-circle"></i></span>
-                        <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+                        <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm Password" required>
                     </div>
                 </div>
                 <button type="submit" class="register-btn">Register</button>
@@ -185,10 +185,88 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-    <script>
-        AOS.init();
-    </script>
 </body>
+<script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{{ asset('js/toast.js') }}"></script>
+
+
+<script>
+    AOS.init();
+    $(document).ready(function() {
+        $('#registerForm').on('submit', function(e) {
+            e.preventDefault();
+            const data = {
+                firstname: $('#firstname').val(),
+                lastname: $('#lastname').val(),
+                departement: $('#departement').val(),
+                name: $('#username').val(),
+                email: $('#email').val(),
+                phone: $('#phone').val(),
+                password: $('#password').val(),
+                password_confirmation: $('#confirm_password').val()
+            };
+
+            // Kirim data via AJAX POST
+            $.ajax({
+                url: 'http://10.21.1.125:8000/api/register',
+                type: 'POST',
+                contentType: 'application/json',
+                headers : {
+                    'Accept' :'application/json'
+                },
+                data: JSON.stringify(data),
+                success: function(response) {
+                    if (response.status === true) {
+                        window.parent.postMessage({
+                            event: 'show-toast',
+                            type: 'success',
+                            message: 'Registrasi berhasil'
+                        }, '*');
+                        window.parent.postMessage({
+                            event: 'true'
+                        }, '*');
+                    } else {
+                        window.parent.postMessage({
+                            event: 'show-toast',
+                            type: 'error',
+                            message: response.message || 'Terjadi Kesalahan Pada Saat Registrasi'
+                        }, '*');
+                    }
+                },
+                error: function(xhr) {
+                    let errorMsg = 'Registrasi gagal';
+                    try {
+                        const errJson = JSON.parse(xhr.responseText);
+
+                        if (errJson.errors) {
+                            for (const key in errJson.errors) {
+                                errJson.errors[key].forEach((msg) => {
+                                    window.parent.postMessage({
+                                        event: 'show-toast',
+                                        type: 'error',
+                                        message: msg
+                                    }, '*');
+                                });
+                            }
+                            return;
+                        }
+                        errorMsg = errJson.message || errorMsg;
+                    } catch (e) {
+                        errorMsg += 'Tidak dapat membaca respon error';
+                    }
+
+                    window.parent.postMessage({
+                        event: 'show-toast',
+                        type: 'error',
+                        message: errorMsg
+                    }, '*');
+                }
+            });
+        });
+    });
+</script>
+
 
 </html>

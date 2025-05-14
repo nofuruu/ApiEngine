@@ -18,17 +18,20 @@ return [
 
     'allowed_methods' => ['*'],  // Mengizinkan semua metode HTTP (GET, POST, PUT, DELETE, dll.)
 
-   'allowed_origins' => [
+    'allowed_origins' => [
         'http://10.21.1.125',
         'http://10.21.1.125/UI',
         'http://10.21.1.125/UI/',
+        'http://10.21.1.125/UI/register',
         'http://localhost',
-        'http://localhost/UI'
+        'http://localhost/UI',
+
     ],
 
     'allowed_origins_patterns' => [
-        'http://10.21.1.125/UI/*'
+        '#^http://10\.21\.1\.125/UI/.*#'
     ],
+
 
     'allowed_headers' => [
         'Content-Type',

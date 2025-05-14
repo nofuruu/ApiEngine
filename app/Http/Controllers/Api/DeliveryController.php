@@ -62,10 +62,25 @@ class DeliveryController extends BaseApiController
         if ($tokenValidation !== true) return $tokenValidation;
 
         try {
-            $deliveriess = $this->model->orderBy('id', 'asc')->get();
-            return $this->successResponse($deliveriess);
+            $draw = intval($request->get('draw'));
+            $start = intval($request->get('start'));
+            $length = intval($request->get('length'));
+
+            $query = $this->model->orderBy('id', 'asc');
+            $total = $query->count();
+
+            $data = $query->skip($start)->take($length)->get();
+
+            return response()->json([
+                'draw' => $draw,
+                'recordsTotal' => $total,
+                'recordsFiltered' => $total,
+                'data' => $data
+            ]);
         } catch (\Exception $e) {
-            return $this->errorResponse('Error fetching deliveriess', 500);
+            return response()->json([
+                'error' => 'Error fetching deliveries'
+            ], 500);
         }
     }
 
@@ -73,7 +88,7 @@ class DeliveryController extends BaseApiController
     {
         $tokenValidation = $this->validateToken($request);
         if ($tokenValidation !== true) return $tokenValidation;
-    
+
         try {
             $validator = Validator::make($request->all(), [
                 'sender_name' => 'required|string|max:255',
@@ -83,22 +98,22 @@ class DeliveryController extends BaseApiController
                 'sender_phone' => 'required|digits_between:10,15',
                 'recipient_phone' => 'required|digits_between:10,15'
             ]);
-    
+
             if ($validator->fails()) {
                 return $this->errorResponse($validator->errors(), 422);
             }
-    
+
             $data = $validator->validated();
             $data['status'] = 'pending';
-            
+
             $deliveries = $this->model->create($data);
-    
+
             return $this->successResponse($deliveries, 'Deliveries Request Created', 201);
         } catch (\Exception $e) {
             return $this->errorResponse('Error creating deliveries', 500);
         }
     }
-    
+
 
     public function show(Request $request, string $id)
     {

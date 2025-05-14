@@ -10,15 +10,17 @@ class OtpMail extends Mailable
     use SerializesModels;
 
     public $otp;
+    public $name;
 
     /**
      * Create a new message instance.
      *
      * @param $otp
      */
-    public function __construct($otp)
+    public function __construct($otp, $name)
     {
         $this->otp = $otp;
+        $this->name = $name;
     }
 
     /**
@@ -29,6 +31,10 @@ class OtpMail extends Mailable
     public function build()
     {
         return $this->subject('Your OTP Code')
-                    ->view('email.otp'); // Pastikan Anda membuat tampilan email OTP
+            ->view('email.otp') // Pastikan Anda membuat tampilan email OTP
+            ->with([
+                'otp' => $this->otp,
+                'name' => $this->name,
+            ]);
     }
 }

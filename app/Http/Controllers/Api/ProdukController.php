@@ -65,12 +65,19 @@ class ProdukController extends BaseApiController
         if ($tokenValidation !== true) return $tokenValidation;
 
         try {
-            $products = $this->model->orderBy('id', 'asc')->get();
+            $query = $this->model->orderBy('id', 'asc');
+
+            if ($request->has('from_date') && $request->has('to_date')) {
+                $query->whereBetween('created_at', [$request->from_date, $request->to_date]);
+            }
+
+            $products = $query->get();
             return $this->successResponse($products);
         } catch (\Exception $e) {
             return $this->errorResponse('Error fetching products', 500);
         }
     }
+
 
     public function store(Request $request)
     {
